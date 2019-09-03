@@ -26,7 +26,7 @@ class RootDeviceManager(gatt.DeviceManager):
         self.thread.start()
 
     def disconnect(self):
-        self.send_command(rp.build_command('disconnect', 0))
+        self.send_command(rp.build_command('disconnect'))
         self.stop()
         self.robot.disconnect()
         self.thread.join()

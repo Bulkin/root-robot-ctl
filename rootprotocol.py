@@ -1,3 +1,4 @@
+import struct
 import warnings
 
 
@@ -21,28 +22,25 @@ devices = { 0: 'general',
 rdevices = dict([reversed(i) for i in devices.items()])
 
 commands = {
-    'versions':    ([0, 0], 'byte'),
-    'disconnect':  ([0, 6], None),
-    'motors':      ([1, 4], 'int-pair'),
-    'drive':       ([1, 8], 'int'),
-    'turn':        ([1, 12], 'int'),
-    'setpen':      ([2, 0], 'byte'),
-    'say':         ([5, 4], 'str'),
+    'versions':    ([0, 0], 'B'),
+    'disconnect':  ([0, 6], ''),
+    'motors':      ([1, 4], '>ii'),
+    'drive':       ([1, 8], '>i'),
+    'turn':        ([1, 12], '>i'),
+    'setpen':      ([2, 0], 'B'),
+    'say':         ([5, 4], 'B'*16),
 }
 
+
 def truncate(lst, max_size=16):
-    return lst[:min(len(lst), max_size)]
+    return list(lst[:min(len(lst), max_size)])
+
+def str_to_payload(s):
+    return truncate(bytes(s, 'ascii')) + [0] * (16 - len(s))
 
 def convert_int(x):
     return list(round(x).to_bytes(4, 'big', signed=True))
 
-payload_types = {
-    None: lambda x: [],
-    'int': lambda x: convert_int(x),
-    'int-pair': lambda x: convert_int(x[0]) + convert_int(x[1]),
-    'byte': lambda x: [x],
-    'str': lambda x: truncate(list(map(ord, x))),
-}
 
 board_ids = {
     'main': 0xA5,
@@ -71,16 +69,14 @@ def crc8(data):
     return crc & 0xFF
 
 
-def _pad(data):
+def build_command(name, *args):
+    pkt = commands[name][0] + [0]
+    fmt = commands[name][1]
+    pkt += list(struct.pack(fmt, *args))
     packet_length = 19 # bytes + crc
-    data += [0x0] * (packet_length - len(data))
-    data += [crc8(data)]
-    return data
-
-
-def build_command(name, payload=None):
-    return _pad(commands[name][0] + [0]
-                + payload_types[commands[name][1]](payload))
+    pkt += [0] * (packet_length - len(pkt))
+    pkt += [crc8(pkt)]
+    return pkt
 
 
 def parse_response(data):

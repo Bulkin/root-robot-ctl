@@ -60,7 +60,7 @@ class RootState:
         return rp.build_command('setpen', 1)
 
     def say(self, phrase):
-        return rp.build_command('say', phrase)
+        return rp.build_command('say', *rp.str_to_payload(phrase))
 
     def goto(self, x, y):
         bearing = self.pos.towards(Point(x, y))
@@ -78,9 +78,9 @@ class RootState:
     
         self.pos = Point(x, y)
         
-        return [ rp.build_command('turn', 1800 / math.pi * angle),
-                 rp.build_command('drive', distance),
-                 rp.build_command('turn', -1800 / math.pi * angle) ]
+        return [ rp.build_command('turn', int(1800 / math.pi * angle)),
+                 rp.build_command('drive', int(distance)),
+                 rp.build_command('turn', int(-1800 / math.pi * angle)) ]
 
     def reset(self):
         angle = (self.angle - math.pi / 2)
@@ -90,7 +90,7 @@ class RootState:
                 [rp.build_command('turn', 1800 / math.pi * angle)])
        
     def direct_drive(self, left, right):
-        return rp.build_command('motors', (left, right))
+        return rp.build_command('motors', left, right)
 
 
 class RootDevice:
