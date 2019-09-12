@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Example from https://docs.python.org/3.7/library/turtle.html
+
 from rootturtle import *
 
 color('red', 'yellow')
